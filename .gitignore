@@ -1,0 +1,7 @@
+pretrained_models/*pth
+pretrained_models/*pt
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+experiment*/
+datasets/*/

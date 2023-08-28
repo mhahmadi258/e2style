@@ -1,0 +1,1 @@
+This is code is heavily based on "E2Style: Improve the Efficiency and Effectiveness of StyleGAN Inversion" paper
