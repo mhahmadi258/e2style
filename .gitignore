@@ -1,5 +1,7 @@
 pretrained_models/*pth
 pretrained_models/*pt
+!pretrain_models/alex.pth
+!pretrain_models/parsing.pth
 */__pycache__/
 */*/__pycache__/
 */*/*/__pycache__/
