@@ -14,7 +14,7 @@ from criteria.parsing_loss import parse_loss
 from utils import common, train_utils
 from criteria import id_loss, w_norm
 from configs import data_configs
-from datasets.images_dataset import ImagesDataset
+from datasets.images_dataset import ImagesDataset , MHImagesDataset
 from criteria.lpips.lpips import LPIPS
 from models.e2style import E2Style
 from training.ranger import Ranger
@@ -187,18 +187,16 @@ class Coach:
 		print('Loading dataset for {}'.format(self.opts.dataset_type))
 		dataset_args = data_configs.DATASETS[self.opts.dataset_type]
 		transforms_dict = dataset_args['transforms'](self.opts).get_transforms()
-		train_dataset_celeba = ImagesDataset(source_root=dataset_args['train_source_root'],
-		                                     target_root=dataset_args['train_target_root'],
-		                                     source_transform=transforms_dict['transform_source'],
-		                                     target_transform=transforms_dict['transform_gt_train'],
-		                                     opts=self.opts)
-		test_dataset_celeba = ImagesDataset(source_root=dataset_args['test_source_root'],
-		                                    target_root=dataset_args['test_target_root'],
-		                                    source_transform=transforms_dict['transform_source'],
-		                                    target_transform=transforms_dict['transform_test'],
-		                                    opts=self.opts)
-		train_dataset = train_dataset_celeba
-		test_dataset = test_dataset_celeba
+		train_dataset = MHImagesDataset(source_root=dataset_args['train_source_root'],
+									  train=True,
+									  source_transform=transforms_dict['transform_source'],
+									  target_transform=transforms_dict['transform_gt_train'],
+									  opts=self.opts)
+		test_dataset = MHImagesDataset(source_root=dataset_args['test_source_root'],
+									 train = False,
+									 source_transform=transforms_dict['transform_source'],
+									 target_transform=transforms_dict['transform_test'],
+									 opts=self.opts)
 		print("Number of training samples: {}".format(len(train_dataset)))
 		print("Number of test samples: {}".format(len(test_dataset)))
 		return train_dataset, test_dataset

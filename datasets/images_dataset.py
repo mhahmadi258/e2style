@@ -71,3 +71,45 @@ class ImagesDataset(Dataset):
 			from_im = to_im
 
 		return from_im, to_im
+
+
+class MHImagesDataset(Dataset):
+
+	def __init__(self, source_root, train, opts, target_transform=None, source_transform=None):
+		self.source_paths = sorted(data_utils.make_dataset(source_root))
+		if train:
+			self.source_paths =self.source_paths[:int(len(self.source_paths)*0.9)]
+		else:
+			self.source_paths = self.source_paths[int(len(self.source_paths)*0.9):]
+		self.source_transform = source_transform
+		self.target_transform = target_transform
+		self.opts = opts
+
+	def __len__(self):
+		return len(self.source_paths)
+
+	def __getitem__(self, index):
+		idx = 0
+		while True:
+			path = self.source_paths[index-idx]
+			try:
+				img = Image.open(path)
+				break
+			except :
+				idx +=1
+   
+		img = img.convert('RGB') if self.opts.label_nc == 0 else img.convert('L')
+  
+		from_im = img.crop((0,0,512,512))
+		to_im = img.crop((512,0,1024,512))
+
+
+		if self.target_transform:
+			to_im = self.target_transform(to_im)
+
+		if self.source_transform:
+			from_im = self.source_transform(from_im)
+		else:
+			from_im = to_im
+
+		return from_im, to_im
