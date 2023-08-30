@@ -11,7 +11,7 @@ DATASETS = {
 		'test_target_root': dataset_paths['celeba_test'],
 	},
  	'mh_frontalize': {
-		'transforms': transforms_config.EncodeTransforms,
+		'transforms': transforms_config.FrontalizationTransforms,
 		'train_source_root': dataset_paths['mh_dataset'],
 		'train_target_root': dataset_paths['mh_dataset'],
 		'test_source_root': dataset_paths['mh_dataset'],
