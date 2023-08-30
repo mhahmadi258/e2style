@@ -100,8 +100,8 @@ class MHImagesDataset(Dataset):
    
 		img = img.convert('RGB') if self.opts.label_nc == 0 else img.convert('L')
   
-		from_im = img.crop((0,0,512,512))
-		to_im = img.crop((512,0,1024,512))
+		from_im = img.crop((0,0,256,256))
+		to_im = img.crop((256,0,512,256))
 
 
 		if self.target_transform:
