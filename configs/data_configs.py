@@ -10,6 +10,13 @@ DATASETS = {
 		'test_source_root': dataset_paths['celeba_test'],
 		'test_target_root': dataset_paths['celeba_test'],
 	},
+ 	'mh_frontalize': {
+		'transforms': transforms_config.EncodeTransforms,
+		'train_source_root': dataset_paths['mh_dataset'],
+		'train_target_root': dataset_paths['mh_dataset'],
+		'test_source_root': dataset_paths['mh_dataset'],
+		'test_target_root': dataset_paths['mh_dataset'],
+	},
 	'ffhq_colorization': {
 		'transforms': transforms_config.RestorationTransforms,
 		'train_source_root': dataset_paths['ffhq'],
