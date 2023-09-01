@@ -25,6 +25,20 @@ class E2Style(nn.Module):
 		self.decoder = Generator(1024, 512, 8)
 		self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
 		self.load_weights()
+		self.freeze_encoder_first_stage()
+		self.freeze_decoder()
+  
+  
+	def freeze_decoder(self):
+		print('freezing decoder ...')
+		for param in self.decoder.parameters():
+			param.requires_grad = False
+   
+	def freeze_encoder_first_stage(self):
+		print('freezing encoder ...')
+		for name, param in self.encoder_firststage.named_parameters():
+			if not name.startswith('adapter_layer'):
+				param.requires_grad = False
 
 
 	def load_weights(self):
@@ -44,7 +58,7 @@ class E2Style(nn.Module):
 			print(f'Train: The {self.stage}-th encoder of E2Style is to be trained.', flush=True)
 			print('Loading previous encoders and decoder from checkpoint: {}'.format(self.opts.checkpoint_path), flush=True)
 			ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
-			self.encoder_firststage.load_state_dict(get_keys(ckpt, 'encoder_firststage'), strict=True)
+			self.encoder_firststage.load_state_dict(get_keys(ckpt, 'encoder_firststage'), strict=False)
 			if self.stage > 2:
 				for i in range(self.stage-2):
 					self.encoder_refinestage_list[i].load_state_dict(get_keys(ckpt, f'encoder_refinestage_list.{i}'), strict=True)
