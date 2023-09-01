@@ -20,8 +20,8 @@ class AdapterBlock(Module):
         for i in range(self.num_module):
             vector = x[:,i,...]
             out = self.adapters[i](vector)
-            vector += out
-            vectors.append(vector)
+            res = vector + out
+            vectors.append(res)
         return torch.stack(vectors,dim=1)
 
 class BackboneEncoderFirstStage(Module):
