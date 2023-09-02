@@ -63,11 +63,9 @@ class E2Style(nn.Module):
 				for i in range(self.stage-2):
 					self.encoder_refinestage_list[i].load_state_dict(get_keys(ckpt, f'encoder_refinestage_list.{i}'), strict=True)
 			self.decoder.load_state_dict(get_keys(ckpt, 'decoder'), strict=True)
-			print(f'Loading the {self.stage}-th encoder weights from irse50!')
-			encoder_ckpt = torch.load(model_paths['ir_se50'])
-			encoder_ckpt = {k: v for k, v in encoder_ckpt.items() if "input_layer" not in k}
 			if self.stage > 1:
-				self.encoder_refinestage_list[self.stage-2].load_state_dict(encoder_ckpt, strict=False)
+				print(f'loading second stage weights')
+				self.encoder_refinestage_list[self.stage-2].load_state_dict(get_keys(ckpt, 'encoder_firststage'), strict=False)
 			self.__load_latent_avg(ckpt)
 		elif (self.opts.checkpoint_path is None) and (self.stage==1) and self.opts.is_training:
 			print(f'Train: The 1-th encoder of E2Style is to be trained.', flush=True)
