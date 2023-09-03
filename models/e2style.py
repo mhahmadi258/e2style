@@ -65,7 +65,7 @@ class E2Style(nn.Module):
 			print(f'Train: The {self.stage}-th encoder of E2Style is to be trained.', flush=True)
 			print('Loading previous encoders and decoder from checkpoint: {}'.format(self.opts.checkpoint_path), flush=True)
 			ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
-			self.encoder_firststage.load_state_dict(get_keys(ckpt, 'encoder_firststage'), strict=False)
+			self.encoder_firststage.load_state_dict(get_keys(ckpt, 'encoder_firststage'), strict=True)
 			if self.stage > 2:
 				for i in range(self.stage-2):
 					self.encoder_refinestage_list[i].load_state_dict(get_keys(ckpt, f'encoder_refinestage_list.{i}'), strict=True)
