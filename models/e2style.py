@@ -39,6 +39,13 @@ class E2Style(nn.Module):
 		for name, param in self.encoder_firststage.named_parameters():
 			if not name.startswith('adapter_layer'):
 				param.requires_grad = False
+    
+
+	def freeze_encoder_second_stage(self):
+		print('freezing encoder second stage  ...')
+		for name, param in self.encoder_refinestage_list[0].named_parameters():
+			if not name.startswith('adapter_layer'):
+				param.requires_grad = False
 
 
 	def load_weights(self):
@@ -63,9 +70,10 @@ class E2Style(nn.Module):
 				for i in range(self.stage-2):
 					self.encoder_refinestage_list[i].load_state_dict(get_keys(ckpt, f'encoder_refinestage_list.{i}'), strict=True)
 			self.decoder.load_state_dict(get_keys(ckpt, 'decoder'), strict=True)
+			ckpt = torch.load(self.opts.checkpoint_path2, map_location='cpu')
 			if self.stage > 1:
 				print(f'loading second stage weights')
-				self.encoder_refinestage_list[self.stage-2].load_state_dict(get_keys(ckpt, 'encoder_firststage'), strict=False)
+				self.encoder_refinestage_list[self.stage-2].load_state_dict(get_keys(ckpt, 'encoder_refinestage_list.0'), strict=False)
 			self.__load_latent_avg(ckpt)
 		elif (self.opts.checkpoint_path is None) and (self.stage==1) and self.opts.is_training:
 			print(f'Train: The 1-th encoder of E2Style is to be trained.', flush=True)

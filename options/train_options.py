@@ -38,6 +38,7 @@ class TrainOptions:
 
 		self.parser.add_argument('--stylegan_weights', default=model_paths['stylegan_ffhq'], type=str, help='Path to StyleGAN model weights')
 		self.parser.add_argument('--checkpoint_path', default=None, type=str, help='Path to E2Style model checkpoint')
+		self.parser.add_argument('--checkpoint_path2', default=None, type=str, help='Path to E2Style second stage model checkpoint')
 
 		self.parser.add_argument('--max_steps', default=500000, type=int, help='Maximum number of training steps')
 		self.parser.add_argument('--image_interval', default=100, type=int, help='Interval for logging train images during training')
