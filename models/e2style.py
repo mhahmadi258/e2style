@@ -86,13 +86,13 @@ class E2Style(nn.Module):
 				self.__load_latent_avg(ckpt, repeat=18)		
 
 
-	def forward(self, x, resize=True, input_code=False, randomize_noise=True, return_latents=False):
+	def forward(self, x, yaw, resize=True, input_code=False, randomize_noise=True, return_latents=False):
 
 		stage_output_list = []
 		if input_code:
 			codes = x
 		else:
-			codes = self.encoder_firststage(x)
+			codes = self.encoder_firststage(x, yaw)
 			if self.opts.start_from_latent_avg:
 				if self.opts.learn_in_w:
 					codes = codes + self.latent_avg.repeat(codes.shape[0], 1)

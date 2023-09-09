@@ -80,9 +80,9 @@ class Coach:
 		while self.global_step < self.opts.max_steps:
 			for batch_idx, batch in enumerate(self.train_dataloader):
 				self.optimizer.zero_grad()
-				x, y = batch
-				x, y = x.to(self.device).float(), y.to(self.device).float()
-				y_hat, latent = self.net.forward(x, return_latents=True)
+				x, y, yaw = batch
+				x, y, yaw = x.to(self.device).float(), y.to(self.device).float(), yaw.to(self.device)
+				y_hat, latent = self.net.forward(x, yaw, return_latents=True)
 				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
 				loss.backward()
 				self.optimizer.step()
@@ -119,11 +119,11 @@ class Coach:
 		self.net.eval()
 		agg_loss_dict = []
 		for batch_idx, batch in enumerate(self.test_dataloader):
-			x, y = batch
+			x, y, yaw = batch
 
 			with torch.no_grad():
-				x, y = x.to(self.device).float(), y.to(self.device).float()
-				y_hat, latent = self.net.forward(x, return_latents=True)
+				x, y, yaw = x.to(self.device).float(), y.to(self.device).float(), yaw.to(self.device)
+				y_hat, latent = self.net.forward(x, yaw, return_latents=True)
 				loss, cur_loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
 			agg_loss_dict.append(cur_loss_dict)
 
