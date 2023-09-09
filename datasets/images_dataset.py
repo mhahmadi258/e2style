@@ -119,7 +119,7 @@ class MHImagesDataset(Dataset):
    
 		img = img.convert('RGB') if self.opts.label_nc == 0 else img.convert('L')
 		yaw_idx = abs(yaw) // 5 if yaw > 0 else -(abs(yaw) // 5)
-		yaw_emb = self.positional_encoding[yaw_idx]
+		yaw_emb = self.positional_encoding[int(yaw_idx)]
   
 		from_im = img.crop((0,0,256,256))
 		to_im = img.crop((256,0,512,256))
