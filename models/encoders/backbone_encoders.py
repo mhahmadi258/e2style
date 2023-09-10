@@ -12,14 +12,14 @@ class AdapterBlock(Module):
         self.in_d = in_d
         self.out_d = out_d
         self.num_module = num_module
-        self.adapters = nn.ModuleList([Linear(2*in_d, out_d, device='cuda:0') for _ in range(num_module)])
+        self.adapters = nn.ModuleList([Linear(in_d, out_d, device='cuda:0') for _ in range(num_module)])
         
 
     def forward(self, x, yaw):
         vectors = list()
         for i in range(self.num_module):
             vector = x[:,i,...]
-            out = self.adapters[i](torch.cat((vector,yaw),dim=1))
+            out = self.adapters[i](vector + yaw)
             res = vector + out
             vectors.append(res)
         return torch.stack(vectors,dim=1)
