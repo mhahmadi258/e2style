@@ -8,21 +8,21 @@ from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottlene
 
 
 class PostionalEncoding(Module):
-    def __init__(self, seq_len, encoding_dim, n=10000):
-        self.positional_encoding = self._getPositionEncoding(seq_len, encoding_dim, n)
     
-    def _getPositionEncoding(self, seq_len, d, n):
-        P = np.zeros((2*seq_len-1, d))
+    def __init__(self, seq_len, encoding_dim, n=10000, device='cuda:0'):
+        super().__init__()
+        self.pe = torch.zeros((2*seq_len-1, encoding_dim)).to(device)
         for k in range(-seq_len+1,seq_len):
-            for i in np.arange(int(d/2)):
-                denominator = np.power(n, 2*i/d)
-                P[k, 2*i] = np.sin(k/denominator)
-                P[k, 2*i+1] = np.cos(k/denominator)
-        return P
+            for i in torch.arange(int(encoding_dim/2)):
+                denominator = np.power(n, 2*i/encoding_dim)
+                self.pe[k, 2*i] = torch.sin(k/denominator)
+                self.pe[k, 2*i+1] = torch.cos(k/denominator)
+        self.register_buffer('positional_encoding', self.pe)
+    
     
     def forward(self, position):
         position = position.int()
-        return self.positional_encoding(position) 
+        return self.pe[position]
 
 class AdapterBlock(Module):
     def __init__(self, in_d, out_d, num_module):
