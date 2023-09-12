@@ -6,6 +6,24 @@ from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module
 
 from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottleneck_IR_SE
 
+
+class PostionalEncoding(Module):
+    def __init__(self, seq_len, encoding_dim, n=10000):
+        self.positional_encoding = self._getPositionEncoding(seq_len, encoding_dim, n)
+    
+    def _getPositionEncoding(self, seq_len, d, n):
+        P = np.zeros((2*seq_len-1, d))
+        for k in range(-seq_len+1,seq_len):
+            for i in np.arange(int(d/2)):
+                denominator = np.power(n, 2*i/d)
+                P[k, 2*i] = np.sin(k/denominator)
+                P[k, 2*i+1] = np.cos(k/denominator)
+        return P
+    
+    def forward(self, position):
+        position = position.int()
+        return self.positional_encoding(position) 
+
 class AdapterBlock(Module):
     def __init__(self, in_d, out_d, num_module):
         super().__init__()
@@ -60,6 +78,8 @@ class BackboneEncoderFirstStage(Module):
         
         self.adapter_layer_5 = AdapterBlock(512,512,4)
         
+        self.positional_encoding = PostionalEncoding(seq_len =18, encoding_dim=512)
+        
         modules = []
         for block in blocks:
             for bottleneck in block:
@@ -70,6 +90,7 @@ class BackboneEncoderFirstStage(Module):
         self.modulelist = list(self.body)
 
     def forward(self, x, yaw):
+        yaw = self.positional_encoding(yaw)
         x = self.input_layer(x)
         for l in self.modulelist[:3]:
           x = l(x)

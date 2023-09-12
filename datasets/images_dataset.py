@@ -85,22 +85,12 @@ class MHImagesDataset(Dataset):
 		self.source_transform = source_transform
 		self.target_transform = target_transform
 		self.opts = opts
-		self.positional_encoding = self._getPositionEncoding(18,512)
 		self.meta_data = dict()
 		with open(os.path.join(source_root, 'meta.txt'))as f:
 			for line in f.readlines():
 				line = line.strip().split('|')
 				self.meta_data[line[0]] = (float(line[1]), float(line[2]))
     
-    
-	def _getPositionEncoding(self, seq_len, d, n=10000):
-		P = np.zeros((2*seq_len-1, d))
-		for k in range(-seq_len+1,seq_len):
-			for i in np.arange(int(d/2)):
-				denominator = np.power(n, 2*i/d)
-				P[k, 2*i] = np.sin(k/denominator)
-				P[k, 2*i+1] = np.cos(k/denominator)
-		return P
 
 	def __len__(self):
 		return len(self.source_paths)
@@ -118,8 +108,8 @@ class MHImagesDataset(Dataset):
 				idx +=1
    
 		img = img.convert('RGB') if self.opts.label_nc == 0 else img.convert('L')
-		yaw_idx = abs(yaw) // 5 if yaw > 0 else -(abs(yaw) // 5)
-		yaw_emb = self.positional_encoding[int(yaw_idx)]
+		yaw = abs(yaw) // 5 if yaw > 0 else -(abs(yaw) // 5)
+		yaw = int(yaw)
   
 		from_im = img.crop((0,0,256,256))
 		to_im = img.crop((256,0,512,256))
@@ -136,4 +126,4 @@ class MHImagesDataset(Dataset):
 		else:
 			from_im = to_im
 
-		return from_im, to_im, yaw_emb
+		return from_im, to_im, yaw
