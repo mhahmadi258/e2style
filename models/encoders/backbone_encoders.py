@@ -2,22 +2,16 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
-from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module
+from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module, Parameter
 
 from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottleneck_IR_SE
 
 
 class PostionalEncoding(Module):
     
-    def __init__(self, seq_len, encoding_dim, n=10000, device='cuda:0'):
+    def __init__(self, seq_len, encoding_dim, device='cuda:0'):
         super().__init__()
-        self.pe = torch.zeros((2*seq_len-1, encoding_dim)).to(device)
-        for k in range(-seq_len+1,seq_len):
-            for i in torch.arange(int(encoding_dim/2)):
-                denominator = np.power(n, 2*i/encoding_dim)
-                self.pe[k, 2*i] = torch.sin(k/denominator)
-                self.pe[k, 2*i+1] = torch.cos(k/denominator)
-        self.register_buffer('positional_encoding', self.pe)
+        self.pe = Parameter(torch.randn(2*seq_len -1, encoding_dim)).to(device)
     
     
     def forward(self, position):
