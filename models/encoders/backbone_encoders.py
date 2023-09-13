@@ -15,7 +15,7 @@ class PostionalEncoding(Module):
     
     
     def forward(self, position):
-        position = position.int()
+        position = position.long()
         return self.pe[position]
 
 class AdapterBlock(Module):
