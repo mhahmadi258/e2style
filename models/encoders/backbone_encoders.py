@@ -31,7 +31,7 @@ class AdapterBlock(Module):
         vectors = list()
         for i in range(self.num_module):
             vector = x[:,i,...]
-            out = self.adapters[i](vector + yaw)
+            out = self.adapters[i](vector * yaw)
             res = vector + out
             vectors.append(res)
         return torch.stack(vectors,dim=1)
