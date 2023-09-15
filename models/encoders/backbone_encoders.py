@@ -11,7 +11,7 @@ class PostionalEncoding(Module):
     
     def __init__(self, seq_len, encoding_dim, device='cuda:0'):
         super().__init__()
-        self.pe = Parameter(torch.randn(2*seq_len -1, encoding_dim)).to(device)
+        self.pe = Parameter(torch.randn(2*seq_len -1, encoding_dim, device=device))
     
     
     def forward(self, position):
