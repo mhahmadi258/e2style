@@ -26,7 +26,7 @@ class E2Style(nn.Module):
 		self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
 		self.load_weights()
 		self.freeze_encoder_first_stage()
-		self.freeze_decoder()
+		# self.freeze_decoder()
   
   
 	def freeze_decoder(self):
