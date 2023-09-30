@@ -23,15 +23,17 @@ class AdapterBlock(Module):
         self.in_d = in_d
         self.out_d = out_d
         self.num_module = num_module
-        self.adapters = nn.ModuleList([Linear(in_d + 18, out_d, device='cuda:0') for _ in range(num_module)])
+        self.adapters = nn.ModuleList([Linear(in_d , out_d, device='cuda:0') for _ in range(num_module)])
+        self.factor_calculator = nn.ModuleList([nn.Sequential(Linear(18, 1, device='cuda:0'), nn.Sigmoid()) for _ in range(num_module)])
         
 
     def forward(self, x, yaw):
         vectors = list()
         for i in range(self.num_module):
             vector = x[:,i,...]
-            out = self.adapters[i](torch.cat((vector,yaw),dim=1))
-            res = vector + out
+            out = self.adapters[i](vector)
+            factor = self.factor_calculator[i](yaw.float())
+            res = vector + factor * out
             vectors.append(res)
         return torch.stack(vectors,dim=1)
 
