@@ -233,6 +233,10 @@ class Coach:
 			loss_w_norm = self.w_norm_loss(latent, self.net.latent_avg)
 			loss_dict['loss_w_norm'] = float(loss_w_norm)
 			loss += loss_w_norm * self.opts.w_norm_lambda
+		if self.opts.l2_regularization >0:
+			learnable_parameters = torch.cat([x.view(-1) for x in self.net.parameters() if x.requires_grad==True])
+			print(learnable_parameters.shape)
+			loss += torch.norm(learnable_parameters, 2) * self.opts.l2_regularization
 		loss_dict['loss'] = float(loss)
 		return loss, loss_dict, id_logs
 
