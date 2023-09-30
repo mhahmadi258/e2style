@@ -9,20 +9,13 @@ from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottlene
 
 class PostionalEncoding(Module):
     
-    def __init__(self, seq_len, encoding_dim, n=10000, device='cuda:0'):
+    def __init__(self, num_classes):
         super().__init__()
-        self.pe = torch.zeros((2*seq_len-1, encoding_dim)).to(device)
-        for k in range(-seq_len+1,seq_len):
-            for i in torch.arange(int(encoding_dim/2)):
-                denominator = np.power(n, 2*i/encoding_dim)
-                self.pe[k, 2*i] = torch.sin(k/denominator)
-                self.pe[k, 2*i+1] = torch.cos(k/denominator)
-        self.register_buffer('positional_encoding', self.pe)
+        self.num_classes = num_classes
     
-    
-    def forward(self, position):
-        position = position.int()
-        return self.pe[position]
+    def forward(self, yaw):
+        yaw = yaw.int()
+        return F.one_hot(yaw, self.num_classes)
 
 class AdapterBlock(Module):
     def __init__(self, in_d, out_d, num_module):
@@ -30,14 +23,14 @@ class AdapterBlock(Module):
         self.in_d = in_d
         self.out_d = out_d
         self.num_module = num_module
-        self.adapters = nn.ModuleList([Linear(in_d, out_d, device='cuda:0') for _ in range(num_module)])
+        self.adapters = nn.ModuleList([Linear(in_d + 18, out_d, device='cuda:0') for _ in range(num_module)])
         
 
     def forward(self, x, yaw):
         vectors = list()
         for i in range(self.num_module):
             vector = x[:,i,...]
-            out = self.adapters[i](vector + yaw)
+            out = self.adapters[i](torch.cat((vector,yaw),dim=1))
             res = vector + out
             vectors.append(res)
         return torch.stack(vectors,dim=1)
@@ -78,7 +71,7 @@ class BackboneEncoderFirstStage(Module):
         
         self.adapter_layer_5 = AdapterBlock(512,512,4)
         
-        self.positional_encoding = PostionalEncoding(seq_len =18, encoding_dim=512)
+        self.positional_encoding = PostionalEncoding(num_classes=18)
         
         modules = []
         for block in blocks:

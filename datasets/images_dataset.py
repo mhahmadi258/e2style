@@ -108,7 +108,7 @@ class MHImagesDataset(Dataset):
 				idx +=1
    
 		img = img.convert('RGB') if self.opts.label_nc == 0 else img.convert('L')
-		yaw = abs(yaw) // 5 if yaw > 0 else -(abs(yaw) // 5)
+		yaw = abs(yaw) // 5
 		yaw = int(yaw)
   
 		from_im = img.crop((0,0,256,256))
