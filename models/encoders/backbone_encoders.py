@@ -14,7 +14,7 @@ class PostionalEncoding(Module):
         self.num_classes = num_classes
     
     def forward(self, yaw):
-        yaw = yaw.int()
+        yaw = yaw.long()
         return F.one_hot(yaw, self.num_classes)
 
 class AdapterBlock(Module):
