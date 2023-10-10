@@ -30,14 +30,15 @@ class IDLoss(nn.Module):
         y_feats = self.extract_feats(y)  # Otherwise use the feature from there
         y_hat_feats = self.extract_feats(y_hat)
         x_feates = self.extract_feats(x)
+        # print(x_feates[4].shape)
         for i in range(5):
             y_feat_detached = y_feats[i].detach()
             loss += self.cosloss(y_feat_detached, y_hat_feats[i], cos_target)
             if i == 4:
                 for j in range(n_samples):
-                    diff_target = self.cosloss(y_hat_feats[j], y_feat_detached[j])
-                    diff_input = self.cosloss(y_hat_feats[j], x_feates[j])
-                    diff_views = self.cosloss(y_feat_detached[j], x_feates[j])
+                    diff_target = 1 - self.cosloss(y_hat_feats[i][j], y_feat_detached[j],torch.tensor(1))
+                    diff_input = 1 - self.cosloss(y_hat_feats[i][j], x_feates[i][j],torch.tensor(1))
+                    diff_views = 1 - self.cosloss(y_feat_detached[j], x_feates[i][j],torch.tensor(1))
                     id_logs.append({'diff_target': float(diff_target),
                                     'diff_input': float(diff_input),
                                     'diff_views': float(diff_views)})
