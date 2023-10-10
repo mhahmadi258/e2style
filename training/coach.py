@@ -206,8 +206,9 @@ class Coach:
 		loss = 0.0
 		id_logs = None
 		if self.opts.id_lambda > 0:
-			loss_id = self.id_loss(y_hat, y)
+			loss_id, sim_improvement, id_logs = self.id_loss(y_hat, y)
 			loss_dict['loss_id'] = float(loss_id)
+			loss_dict['id_improve'] = float(sim_improvement)
 			loss = loss_id * self.opts.id_lambda
 		if self.opts.parse_lambda > 0:
 			loss_parse = self.parse_loss(y_hat, y)
