@@ -28,7 +28,7 @@ class AdapterBlock(Module):
             res = res.permute((1, 2, 0))
             res = self.pooling(res)
             res = self.flatten(res)
-            res = self.out_attns(res)
+            res = self.out_attns[i](res)
             vectors.append(res)
         return torch.stack(vectors,dim=1)
 
