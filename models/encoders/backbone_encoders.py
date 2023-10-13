@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
-from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module
+from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module, MultiheadAttention
 
 from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottleneck_IR_SE
 
@@ -13,14 +13,22 @@ class AdapterBlock(Module):
         self.out_d = out_d
         self.num_module = num_module
         self.adapters = nn.ModuleList([Linear(in_d, out_d, device='cuda:0') for _ in range(num_module)])
-        
+        self.attns = nn.ModuleList([MultiheadAttention(out_d, 4) for _ in range(num_module)])
+        self.out_attns = nn.ModuleList([Linear(out_d, out_d, device='cuda:0') for _ in range(num_module)])
+        self.pooling = nn.AdaptiveMaxPool1d(1)
+        self.flatten = nn.Flatten() 
 
     def forward(self, x):
         vectors = list()
         for i in range(self.num_module):
             vector = x[:,i,...]
             out = self.adapters[i](vector)
-            res = vector + out
+            kqv = torch.stack((vector, out))
+            res = self.attns[i](kqv, kqv, kqv)[0]
+            res = res.permute((1, 2, 0))
+            res = self.pooling(res)
+            res = self.flatten(res)
+            res = self.out_attns(res)
             vectors.append(res)
         return torch.stack(vectors,dim=1)
 
