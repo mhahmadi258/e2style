@@ -24,7 +24,7 @@ class AdapterBlock(Module):
             vector = x[:,i,...]
             out = self.adapters[i](vector)
             kqv = torch.stack((vector, out))
-            kqv = torch.vstack((self.attns_cls_token[i].repeat((1,vector.shape[0],vector.shape[1])), kqv))
+            kqv = torch.vstack((self.attns_cls_token[i].repeat((1,vector.shape[0],1)), kqv))
             res = self.attns[i](kqv, kqv, kqv)[0]
             res = self.out_attns[i](res[0])
             vectors.append(res)
