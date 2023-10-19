@@ -14,9 +14,9 @@ class AdapterBlock(Module):
         self.num_module = num_module
         self.adapters = nn.ModuleList([Linear(in_d, out_d, device='cuda:0') for _ in range(num_module)])
         self.attns = nn.ModuleList([MultiheadAttention(out_d, 4) for _ in range(num_module)])
+        self.attns_cls_token = nn.Parameter(torch.rand(num_module, 1, out_d, device='cuda:0'))
         self.out_attns = nn.ModuleList([Linear(out_d, out_d, device='cuda:0') for _ in range(num_module)])
-        self.pooling = nn.AdaptiveMaxPool1d(1)
-        self.flatten = nn.Flatten() 
+ 
 
     def forward(self, x):
         vectors = list()
@@ -24,11 +24,9 @@ class AdapterBlock(Module):
             vector = x[:,i,...]
             out = self.adapters[i](vector)
             kqv = torch.stack((vector, out))
+            kqv = torch.vstack((self.attns_cls_token[i].repeat((1,vector.shape[0],vector.shape[1])), kqv))
             res = self.attns[i](kqv, kqv, kqv)[0]
-            res = res.permute((1, 2, 0))
-            res = self.pooling(res)
-            res = self.flatten(res)
-            res = self.out_attns[i](res)
+            res = self.out_attns[i](res[0])
             vectors.append(res)
         return torch.stack(vectors,dim=1)
 
