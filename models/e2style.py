@@ -11,6 +11,28 @@ def get_keys(d, name):
 	return d_filt
 
 
+class AdapterBlock(nn.Module):
+    def __init__(self, in_d, num_module):
+        super().__init__()
+        self.in_d = in_d
+        self.num_module = num_module
+        self.attns = nn.ModuleList([nn.MultiheadAttention(in_d, 4) for _ in range(num_module)])
+        self.out_attns = nn.ModuleList([nn.Linear(in_d, in_d, device='cuda:0') for _ in range(num_module)])
+        self.pooling = nn.AdaptiveMaxPool1d(1)
+        self.flatten = nn.Flatten() 
+
+    def forward(self, w_org, w_flip):
+        vectors = list()
+        for i in range(self.num_module):
+            kqv = torch.stack((w_org[:,i,...], w_flip[:,i,...]))
+            res = self.attns[i](kqv, kqv, kqv)[0]
+            res = res.permute((1, 2, 0))
+            res = self.pooling(res)
+            res = self.flatten(res)
+            res = self.out_attns[i](res)
+            vectors.append(res)
+        return torch.stack(vectors,dim=1)
+
 class E2Style(nn.Module):
 
 	def __init__(self, opts):
@@ -22,6 +44,7 @@ class E2Style(nn.Module):
 		if self.stage > 1:
 			self.encoder_refinestage_list = nn.ModuleList([backbone_encoders.BackboneEncoderRefineStage(50, 'ir_se', self.opts) for i in range(self.stage-1)])
 
+		self.adapter = AdapterBlock(512,18)
 		self.decoder = Generator(1024, 512, 8)
 		self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
 		self.load_weights()
@@ -86,19 +109,24 @@ class E2Style(nn.Module):
 				self.__load_latent_avg(ckpt, repeat=18)		
 
 
-	def forward(self, x, resize=True, input_code=False, randomize_noise=True, return_latents=False):
+	def forward(self, x, x_flip, resize=True, input_code=False, randomize_noise=True, return_latents=False):
 
 		stage_output_list = []
 		if input_code:
 			codes = x
 		else:
-			codes = self.encoder_firststage(x)
+			with torch.no_grad():
+				codes = self.encoder_firststage(x)
+				codes_flip = self.encoder_firststage(x_flip)
 			if self.opts.start_from_latent_avg:
 				if self.opts.learn_in_w:
 					codes = codes + self.latent_avg.repeat(codes.shape[0], 1)
+					codes_flip = codes_flip + self.latent_avg.repeat(codes_flip.shape[0], 1)
 				else: 
 					codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
+					codes_flip = codes_flip + self.latent_avg.repeat(codes_flip.shape[0], 1, 1)
 		input_is_latent = not input_code
+		codes = self.adapter(codes, codes_flip)
 		first_stage_output, result_latent = self.decoder([codes],input_is_latent=input_is_latent,randomize_noise=randomize_noise,return_latents=return_latents)
 		stage_output_list.append(first_stage_output)
 

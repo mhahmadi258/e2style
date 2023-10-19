@@ -6,31 +6,7 @@ from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module, Mul
 
 from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottleneck_IR_SE
 
-# class AdapterBlock(Module):
-#     def __init__(self, in_d, out_d, num_module):
-#         super().__init__()
-#         self.in_d = in_d
-#         self.out_d = out_d
-#         self.num_module = num_module
-#         self.adapters = nn.ModuleList([Linear(in_d, out_d, device='cuda:0') for _ in range(num_module)])
-#         self.attns = nn.ModuleList([MultiheadAttention(out_d, 4) for _ in range(num_module)])
-#         self.out_attns = nn.ModuleList([Linear(out_d, out_d, device='cuda:0') for _ in range(num_module)])
-#         self.pooling = nn.AdaptiveMaxPool1d(1)
-#         self.flatten = nn.Flatten() 
 
-#     def forward(self, x):
-#         vectors = list()
-#         for i in range(self.num_module):
-#             vector = x[:,i,...]
-#             out = self.adapters[i](vector)
-#             kqv = torch.stack((vector, out))
-#             res = self.attns[i](kqv, kqv, kqv)[0]
-#             res = res.permute((1, 2, 0))
-#             res = self.pooling(res)
-#             res = self.flatten(res)
-#             res = self.out_attns[i](res)
-#             vectors.append(res)
-#         return torch.stack(vectors,dim=1)
 
 class BackboneEncoderFirstStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
@@ -82,15 +58,12 @@ class BackboneEncoderFirstStage(Module):
         for l in self.modulelist[:3]:
           x = l(x)
         lc_part_4 = self.output_layer_5(x).view(-1, 4, 512)
-        # lc_part_4 = self.adapter_layer_5(lc_part_4)
         for l in self.modulelist[3:7]:
           x = l(x)
         lc_part_3 = self.output_layer_4(x).view(-1, 5, 512)
-        # lc_part_3 = self.adapter_layer_4(lc_part_3)
         for l in self.modulelist[7:21]:
           x = l(x)
-        lc_part_2 = self.output_layer_3(x).view(-1, 9, 512)
-        # lc_part_2 = self.adapter_layer_3(lc_part_2)
+        lc_part_2 = self.output_layer_3(x).view(-1, 9, 512) 
 
         x = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
         return x

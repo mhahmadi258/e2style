@@ -106,13 +106,17 @@ class MHImagesDataset(Dataset):
 		if np.random.uniform(0, 1) < 0.5:
 			from_im = from_im.transpose(Image.FLIP_LEFT_RIGHT)
 			to_im = to_im.transpose(Image.FLIP_LEFT_RIGHT)
+   
+		from_flip_im = from_im.transpose(Image.FLIP_LEFT_RIGHT)
 
 		if self.target_transform:
 			to_im = self.target_transform(to_im)
 
 		if self.source_transform:
 			from_im = self.source_transform(from_im)
+			from_flip_im = self.source_transform(from_flip_im)
 		else:
 			from_im = to_im
+			from_flip_im = to_im
 
-		return from_im, to_im
+		return from_im, from_flip_im, to_im

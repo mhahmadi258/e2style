@@ -73,6 +73,7 @@ class Coach:
 
 	def train(self):
 		self.net.eval()
+		print(f'parameter================={sum(p.numel() for p in self.net.parameters() if p.requires_grad)}')
 		if self.opts.training_stage == 1:
 			self.net.encoder_firststage.train()
 		else:
@@ -80,9 +81,9 @@ class Coach:
 		while self.global_step < self.opts.max_steps:
 			for batch_idx, batch in enumerate(self.train_dataloader):
 				self.optimizer.zero_grad()
-				x, y = batch
-				x, y = x.to(self.device).float(), y.to(self.device).float()
-				y_hat, latent = self.net.forward(x, return_latents=True)
+				x, x_flip, y = batch
+				x, x_flip, y = x.to(self.device).float(), x_flip.to(self.device), y.to(self.device).float()
+				y_hat, latent = self.net.forward(x, x_flip, return_latents=True)
 				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
 				loss.backward()
 				self.optimizer.step()
@@ -119,11 +120,11 @@ class Coach:
 		self.net.eval()
 		agg_loss_dict = []
 		for batch_idx, batch in enumerate(self.test_dataloader):
-			x, y = batch
+			x, x_flip, y = batch
 
 			with torch.no_grad():
-				x, y = x.to(self.device).float(), y.to(self.device).float()
-				y_hat, latent = self.net.forward(x, return_latents=True)
+				x, x_flip, y = x.to(self.device).float(), x_flip.to(self.device).float(), y.to(self.device).float()
+				y_hat, latent = self.net.forward(x, x_flip, return_latents=True)
 				loss, cur_loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
 			agg_loss_dict.append(cur_loss_dict)
 
