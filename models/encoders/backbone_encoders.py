@@ -6,7 +6,27 @@ from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module, Mul
 
 from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottleneck_IR_SE
 
+class AdapterBlock(nn.Module):
+    def __init__(self, in_d, num_module):
+        super().__init__()
+        self.in_d = in_d
+        self.num_module = num_module
+        self.attns = nn.ModuleList([nn.MultiheadAttention(in_d, 4) for _ in range(num_module)])
+        self.out_attns = nn.ModuleList([nn.Linear(in_d, in_d, device='cuda:0') for _ in range(num_module)])
+        self.pooling = nn.AdaptiveMaxPool1d(1)
+        self.flatten = nn.Flatten() 
 
+    def forward(self, w_org, w_flip):
+        vectors = list()
+        for i in range(self.num_module):
+            kqv = torch.stack((w_org[:,i,...], w_flip[:,i,...]))
+            res = self.attns[i](kqv, kqv, kqv)[0]
+            res = res.permute((1, 2, 0))
+            res = self.pooling(res)
+            res = self.flatten(res)
+            res = self.out_attns[i](res)
+            vectors.append(res)
+        return torch.stack(vectors,dim=1)
 
 class BackboneEncoderFirstStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
@@ -28,22 +48,18 @@ class BackboneEncoderFirstStage(Module):
                                          Flatten(),
                                          Linear(256 * 7 * 7, 512 * 9))
         
-        # self.adapter_layer_3 = AdapterBlock(512,512,9)
-        
         self.output_layer_4 = Sequential(BatchNorm2d(128),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(128 * 7 * 7, 512 * 5))
         
-        # self.adapter_layer_4 = AdapterBlock(512,512,5)
-        
         self.output_layer_5 = Sequential(BatchNorm2d(64),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(64 * 7 * 7, 512 * 4))
-        
-        # self.adapter_layer_5 = AdapterBlock(512,512,4)
-        
+
+        self.adapter = AdapterBlock(512, 18)
+
         modules = []
         for block in blocks:
             for bottleneck in block:
@@ -53,7 +69,7 @@ class BackboneEncoderFirstStage(Module):
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
 
-    def forward(self, x):
+    def calculate_w(self, x):
         x = self.input_layer(x)
         for l in self.modulelist[:3]:
           x = l(x)
@@ -67,6 +83,12 @@ class BackboneEncoderFirstStage(Module):
 
         x = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
         return x
+      
+    def forward(self, x, x_flip):
+      w = self.calculate_w(x)
+      w_flip = self.calculate_w(x_flip)
+      result = self.adapter(w, w_flip)
+      return result
 
 class BackboneEncoderRefineStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
