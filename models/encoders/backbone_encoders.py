@@ -6,6 +6,23 @@ from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module, Mul
 
 from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottleneck_IR_SE
 
+
+class AttentionBlock(Module):
+    def __init__(self, emb_dim, num_heads):
+        self.atn = MultiheadAttention(emb_dim, num_heads=num_heads)
+        self.mlp = nn.Sequential(nn.Linear(emb_dim, emb_dim),
+                                 nn.GELU(),
+                                 nn.Linear(emb_dim,emb_dim))
+        self.norm1 = nn.LayerNorm(emb_dim)
+        self.norm2 = nn.LayerNorm(emb_dim)
+        
+    def foward(self, x):
+        out = x + self.atn(self.norm1(x))
+        out = out + self.mlp(self.norm2(out))
+        return out
+        
+
+
 class AdapterBlock(Module):
     def __init__(self, in_d, out_d, num_module):
         super().__init__()
@@ -13,7 +30,8 @@ class AdapterBlock(Module):
         self.out_d = out_d
         self.num_module = num_module
         self.adapters = nn.ModuleList([Linear(in_d, out_d, device='cuda:0') for _ in range(num_module)])
-        self.attns = nn.ModuleList([MultiheadAttention(out_d, 4) for _ in range(num_module)])
+        self.attns = nn.ModuleList([AttentionBlock(out_d, 4) for _ in range(num_module)])
+        self.attns_cls_token = nn.Parameter(torch.rand(num_module, 1, out_d, device='cuda:0'))
         self.out_attns = nn.ModuleList([Linear(out_d, out_d, device='cuda:0') for _ in range(num_module)])
 
     def forward(self, x):
@@ -22,6 +40,7 @@ class AdapterBlock(Module):
             vector = x[:,i,...]
             out = self.adapters[i](vector)
             kqv = torch.stack((vector, out))
+            kqv = torch.vstack((self.attns_cls_token[i].repeat((1,vector.shape[0],1)), kqv))
             res = self.attns[i](kqv, kqv, kqv)[0]
             res = self.out_attns[i](res[0])
             vectors.append(res)
