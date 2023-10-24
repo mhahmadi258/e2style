@@ -9,6 +9,7 @@ from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottlene
 
 class AttentionBlock(Module):
     def __init__(self, emb_dim, num_heads):
+        super().__init__()
         self.atn = MultiheadAttention(emb_dim, num_heads=num_heads)
         self.mlp = nn.Sequential(nn.Linear(emb_dim, emb_dim),
                                  nn.GELU(),
@@ -16,8 +17,8 @@ class AttentionBlock(Module):
         self.norm1 = nn.LayerNorm(emb_dim)
         self.norm2 = nn.LayerNorm(emb_dim)
         
-    def foward(self, x):
-        out = x + self.atn(self.norm1(x))
+    def forward(self, x):
+        out = x + self.atn(self.norm1(x), self.norm1(x), self.norm1(x))[0]
         out = out + self.mlp(self.norm2(out))
         return out
         
@@ -41,7 +42,7 @@ class AdapterBlock(Module):
             out = self.adapters[i](vector)
             kqv = torch.stack((vector, out))
             kqv = torch.vstack((self.attns_cls_token[i].repeat((1,vector.shape[0],1)), kqv))
-            res = self.attns[i](kqv, kqv, kqv)[0]
+            res = self.attns[i](kqv)
             res = self.out_attns[i](res[0])
             vectors.append(res)
         return torch.stack(vectors,dim=1)
