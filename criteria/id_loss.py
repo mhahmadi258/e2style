@@ -15,6 +15,7 @@ class IDLoss(nn.Module):
         self.facenet.eval()
 
     def extract_feats(self, x):
+        x = x[:,3,...]
         x = x[:, :, 35:223, 32:220]  # Crop interesting region
         x = self.face_pool(x)
         x_feats = self.facenet(x)

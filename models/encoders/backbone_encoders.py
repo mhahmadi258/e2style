@@ -2,27 +2,40 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
-from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module
+from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module, MultiheadAttention
 
 from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottleneck_IR_SE
 
-class AdapterBlock(Module):
-    def __init__(self, in_d, out_d, num_module):
+
+class AttentionBlock(Module):
+    def __init__(self, emb_dim, num_heads):
         super().__init__()
-        self.in_d = in_d
-        self.out_d = out_d
-        self.num_module = num_module
-        self.adapters = nn.ModuleList([Linear(in_d, out_d, device='cuda:0') for _ in range(num_module)])
+        self.atn = MultiheadAttention(emb_dim, num_heads=num_heads)
+        self.mlp = nn.Sequential(nn.Linear(emb_dim, emb_dim),
+                                 nn.GELU(),
+                                 nn.Linear(emb_dim,emb_dim))
+        self.norm1 = nn.LayerNorm(emb_dim)
+        self.norm2 = nn.LayerNorm(emb_dim)
         
+    def forward(self, x):
+        out = x + self.atn(self.norm1(x), self.norm1(x), self.norm1(x))[0]
+        out = out + self.mlp(self.norm2(out))
+        return out
+
+    
+class AdapterBlock(Module):
+    def __init__(self, emb_dim):
+        super().__init__()
+        self.emb_dim = emb_dim
+        self.attn = AttentionBlock(emb_dim, 4)
+        self.attn_cls_token = nn.Parameter(torch.rand(1, emb_dim))
+        self.out_attn = Linear(emb_dim, emb_dim)
 
     def forward(self, x):
-        vectors = list()
-        for i in range(self.num_module):
-            vector = x[:,i,...]
-            out = self.adapters[i](vector)
-            res = vector + out
-            vectors.append(res)
-        return torch.stack(vectors,dim=1)
+        kqv = torch.vstack((self.attns_cls_token.repeat((1,x.shape[0],1)), x))
+        res = self.attn(kqv)
+        res = self.out_attns(res[0])
+        return res
 
 class BackboneEncoderFirstStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
@@ -44,21 +57,16 @@ class BackboneEncoderFirstStage(Module):
                                          Flatten(),
                                          Linear(256 * 7 * 7, 512 * 9))
         
-        self.adapter_layer_3 = AdapterBlock(512,512,9)
-        
         self.output_layer_4 = Sequential(BatchNorm2d(128),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(128 * 7 * 7, 512 * 5))
-        
-        self.adapter_layer_4 = AdapterBlock(512,512,5)
         
         self.output_layer_5 = Sequential(BatchNorm2d(64),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(64 * 7 * 7, 512 * 4))
         
-        self.adapter_layer_5 = AdapterBlock(512,512,4)
         
         modules = []
         for block in blocks:
@@ -68,24 +76,37 @@ class BackboneEncoderFirstStage(Module):
                                            bottleneck.stride))
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
+        
+        self.adapters = nn.ModuleList([AdapterBlock(512, device='cuda:0') for _ in range(18)])
 
-    def forward(self, x):
+    def calc_w(self, x):
         x = self.input_layer(x)
         for l in self.modulelist[:3]:
           x = l(x)
         lc_part_4 = self.output_layer_5(x).view(-1, 4, 512)
-        lc_part_4 = self.adapter_layer_5(lc_part_4)
         for l in self.modulelist[3:7]:
           x = l(x)
         lc_part_3 = self.output_layer_4(x).view(-1, 5, 512)
-        lc_part_3 = self.adapter_layer_4(lc_part_3)
         for l in self.modulelist[7:21]:
           x = l(x)
         lc_part_2 = self.output_layer_3(x).view(-1, 9, 512)
-        lc_part_2 = self.adapter_layer_3(lc_part_2)
 
         x = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
         return x
+    
+    def forward(self, x):
+        ws = list()
+        for i in range(x.shape[1]):
+            w = self.calc_w(x[:,i,...])
+            ws.append(w)    
+        ws = torch.stack(ws)
+        
+        vectors = list()
+        for i in range(18):
+            vector = ws[i]
+            vector = self.adapters[i](vector)
+            vectors.append(vector)
+        return torch.stack(vectors, dim=1)
 
 class BackboneEncoderRefineStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):

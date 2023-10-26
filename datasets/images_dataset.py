@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 from utils import data_utils
 import numpy as np
+import torch
 import cv2
 import random
 import skimage
@@ -89,30 +90,24 @@ class MHImagesDataset(Dataset):
 		return len(self.source_paths)
 
 	def __getitem__(self, index):
-		idx = 0
-		while True:
-			path = self.source_paths[index-idx]
-			try:
-				img = Image.open(path)
-				break
-			except :
-				idx +=1
+		path = self.source_paths[index]
    
 		img = img.convert('RGB') if self.opts.label_nc == 0 else img.convert('L')
   
-		from_im = img.crop((0,0,256,256))
-		to_im = img.crop((256,0,512,256))
-
-		if np.random.uniform(0, 1) < 0.5:
-			from_im = from_im.transpose(Image.FLIP_LEFT_RIGHT)
-			to_im = to_im.transpose(Image.FLIP_LEFT_RIGHT)
+		img = np.array(img)
+  
+		from_imgs = list()
+		for i in range(1,8):
+			from_imgs.append(Image.fromarray(img[:,i*256:(i+1)*256,:]))
+   
+		to_img = Image.fromarray(img[:,:256,:])
 
 		if self.target_transform:
-			to_im = self.target_transform(to_im)
+			to_img = self.target_transform(to_img)
 
 		if self.source_transform:
-			from_im = self.source_transform(from_im)
-		else:
-			from_im = to_im
+			from_imgs = [self.source_transform(from_img) for from_img in from_imgs]
+   
+		from_imgs = torch.stack(from_imgs)
 
-		return from_im, to_im
+		return from_imgs, to_img
