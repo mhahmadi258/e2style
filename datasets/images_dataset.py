@@ -91,7 +91,7 @@ class MHImagesDataset(Dataset):
 
 	def __getitem__(self, index):
 		path = self.source_paths[index]
-   
+		img = Image.open(path)
 		img = img.convert('RGB') if self.opts.label_nc == 0 else img.convert('L')
   
 		img = np.array(img)

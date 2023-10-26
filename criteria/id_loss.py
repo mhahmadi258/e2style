@@ -15,13 +15,13 @@ class IDLoss(nn.Module):
         self.facenet.eval()
 
     def extract_feats(self, x):
-        x = x[:,3,...]
         x = x[:, :, 35:223, 32:220]  # Crop interesting region
         x = self.face_pool(x)
         x_feats = self.facenet(x)
         return x_feats
 
     def forward(self, y_hat, y, x):
+        x = x[:,3,...]
         n_samples = y.shape[0]
         cos_target = torch.ones(n_samples).float().cuda()
         loss = 0

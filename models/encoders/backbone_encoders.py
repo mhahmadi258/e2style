@@ -28,13 +28,13 @@ class AdapterBlock(Module):
         super().__init__()
         self.emb_dim = emb_dim
         self.attn = AttentionBlock(emb_dim, 4)
-        self.attn_cls_token = nn.Parameter(torch.rand(1, emb_dim))
+        self.attn_cls_token = nn.Parameter(torch.rand(1, 1, emb_dim))
         self.out_attn = Linear(emb_dim, emb_dim)
 
     def forward(self, x):
-        kqv = torch.vstack((self.attns_cls_token.repeat((1,x.shape[0],1)), x))
+        kqv = torch.vstack((self.attn_cls_token.repeat((1, x.shape[1],1)), x))
         res = self.attn(kqv)
-        res = self.out_attns(res[0])
+        res = self.out_attn(res[0])
         return res
 
 class BackboneEncoderFirstStage(Module):
@@ -77,7 +77,7 @@ class BackboneEncoderFirstStage(Module):
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
         
-        self.adapters = nn.ModuleList([AdapterBlock(512, device='cuda:0') for _ in range(18)])
+        self.adapters = nn.ModuleList([AdapterBlock(512) for _ in range(18)])
 
     def calc_w(self, x):
         x = self.input_layer(x)
@@ -103,7 +103,7 @@ class BackboneEncoderFirstStage(Module):
         
         vectors = list()
         for i in range(18):
-            vector = ws[i]
+            vector = ws[:,:,i,...]
             vector = self.adapters[i](vector)
             vectors.append(vector)
         return torch.stack(vectors, dim=1)
