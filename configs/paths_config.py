@@ -8,7 +8,7 @@ dataset_paths = {
 	'celeba_train_segmentation': '',
 	'celeba_test_segmentation': '',
 	'ffhq': '',
- 	'mh_dataset' : '/kaggle/input/mh-dataset-seq'
+ 	'mh_dataset' : '/kaggle/input/mh-dataset-seq-v3'
 }
 
 model_paths = {
