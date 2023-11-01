@@ -113,6 +113,6 @@ class MHImagesDataset(Dataset):
 			from_imgs = [self.source_transform(from_img) for from_img in from_imgs]
    
 		idx = np.random.randint(7)
-		from_img = from_img[idx]
+		from_img = from_imgs[idx]
 
 		return from_img, to_img
