@@ -19,5 +19,6 @@ model_paths = {
 	'mtcnn_pnet': 'pretrained_models/mtcnn/pnet.npy',
 	'mtcnn_rnet': 'pretrained_models/mtcnn/rnet.npy',
 	'mtcnn_onet': 'pretrained_models/mtcnn/onet.npy',
-	'shape_predictor': 'pretrained_models/shape_predictor_68_face_landmarks.dat'
+	'shape_predictor': 'pretrained_models/shape_predictor_68_face_landmarks.dat',
+	'facenet_vggface': 'pretrained_models/20180402-114759-vggface2.pt'
 }

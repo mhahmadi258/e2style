@@ -2,15 +2,16 @@ import torch
 from torch import nn
 from configs.paths_config import model_paths
 from models.encoders.model_irse import Backbone
+from models.encoders.model_ir_v1 import InceptionResnetV1
 
 
 class IDLoss(nn.Module):
     def __init__(self):
         super(IDLoss, self).__init__()
-        print('Loading ResNet ArcFace')
-        self.facenet = Backbone(input_size=112, num_layers=50, drop_ratio=0.6, mode='ir_se')
-        self.facenet.load_state_dict(torch.load(model_paths['ir_se50']))
-        self.face_pool = torch.nn.AdaptiveAvgPool2d((112, 112))
+        print('Loading ResNet Facenet')
+        self.facenet = InceptionResnetV1(pretrained='vggface2')
+        self.facenet.load_state_dict(torch.load(model_paths['facenet_vggface']))
+        self.face_pool = torch.nn.AdaptiveAvgPool2d((160, 160))
         self.cosloss = torch.nn.CosineEmbeddingLoss()
         self.facenet.eval()
 
@@ -30,7 +31,6 @@ class IDLoss(nn.Module):
         y_feats = self.extract_feats(y)  # Otherwise use the feature from there
         y_hat_feats = self.extract_feats(y_hat)
         x_feates = self.extract_feats(x)
-        # print(x_feates[4].shape)
         for i in range(5):
             y_feat_detached = y_feats[i].detach()
             loss += self.cosloss(y_feat_detached, y_hat_feats[i], cos_target)
