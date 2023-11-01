@@ -85,7 +85,7 @@ def run():
 				f.write(im_path+'\r\n')
 
 				if opts.couple_outputs or global_i % 100 == 0:
-					input_im = log_input_image(input_batch[i], opts)
+					input_im = log_input_image(input_batch[i,3,...], opts)
 					resize_amount = (256, 256) if opts.resize_outputs else (1024, 1024)
 					if opts.resize_factors is not None:
 						# for super resolution, save the original, down-sampled, and output
