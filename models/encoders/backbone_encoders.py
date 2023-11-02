@@ -73,21 +73,21 @@ class BackboneEncoderFirstStage(Module):
                                          Flatten(),
                                          Linear(256 * 7 * 7, 512 * 9))
         
-        self.adapter_layer_3 = AdapterBlock(512,512,9)
+        self.adapter_layer_3 = AdapterBlock(512,9)
         
         self.output_layer_4 = Sequential(BatchNorm2d(128),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(128 * 7 * 7, 512 * 5))
         
-        self.adapter_layer_4 = AdapterBlock(512,512,5)
+        self.adapter_layer_4 = AdapterBlock(512,5)
         
         self.output_layer_5 = Sequential(BatchNorm2d(64),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(64 * 7 * 7, 512 * 4))
         
-        self.adapter_layer_5 = AdapterBlock(512,512,4)
+        self.adapter_layer_5 = AdapterBlock(512,4)
         
         
         modules = []
@@ -99,7 +99,7 @@ class BackboneEncoderFirstStage(Module):
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
         
-        self.seq_adapters = nn.ModuleList([AdapterBlock(512) for _ in range(18)])
+        self.seq_adapters = nn.ModuleList([SeqAdapterBlock(512) for _ in range(18)])
 
     def calc_w(self, x):
         x = self.input_layer(x)
