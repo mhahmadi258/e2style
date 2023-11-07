@@ -7,9 +7,8 @@ from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module
 from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottleneck_IR_SE
 
 class AdapterBlock(Module):
-    def __init__(self, emb_dim, num_module):
+    def __init__(self, emb_dim):
         super().__init__()
-        self.num_module = num_module
         self.adapter = Linear(emb_dim, emb_dim)
         
 
@@ -49,7 +48,7 @@ class BackboneEncoderFirstStage(Module):
                                          Flatten(),
                                          Linear(64 * 7 * 7, 512 * 4))
         
-        self.adapter_layers = AdapterBlock(512,6)
+        self.adapter_layers = nn.ModuleList([AdapterBlock(512) for _ in range(6)])
         
         modules = []
         for block in blocks:
