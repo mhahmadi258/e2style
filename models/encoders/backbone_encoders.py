@@ -82,6 +82,6 @@ class BackboneEncoderFirstStage(Module):
             vector = w[:,i,...]
             if i < len(self.adapter_layers):
                 vector = self.adapter_layers[i](vector)
-            w_frontal.append(vector)
+            w_frontal.append(vector.unsqueeze(1))
             
         return torch.cat(w_frontal, dim=1)          
