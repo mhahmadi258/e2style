@@ -101,4 +101,4 @@ class BackboneEncoderFirstStage(Module):
 
         x = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
         w_y = self.calc_w(y)
-        return x, y 
+        return x, w_y
