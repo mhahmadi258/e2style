@@ -37,7 +37,7 @@ class E2Style(nn.Module):
 	def freeze_encoder_first_stage(self):
 		print('freezing encoder ...')
 		for name, param in self.encoder_firststage.named_parameters():
-			if 'adapter_layer' not in name:
+			if 'seq_adapters' not in name:
 				param.requires_grad = False
 
 
