@@ -82,8 +82,8 @@ class Coach:
 				self.optimizer.zero_grad()
 				x, y = batch
 				x, y = x.to(self.device).float(), y.to(self.device).float()
-				y_hat, latent = self.net.forward(x, return_latents=True)
-				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
+				y_hat, latent, latent_y = self.net.forward(x, y=y, return_latents=True)
+				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent, latent_y)
 				loss.backward()
 				self.optimizer.step()
 
@@ -123,8 +123,8 @@ class Coach:
 
 			with torch.no_grad():
 				x, y = x.to(self.device).float(), y.to(self.device).float()
-				y_hat, latent = self.net.forward(x, return_latents=True)
-				loss, cur_loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
+				y_hat, latent, latent_y = self.net.forward(x, y=y, return_latents=True)
+				loss, cur_loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent, latent_y)
 			agg_loss_dict.append(cur_loss_dict)
 
 			# Logging related
@@ -201,7 +201,7 @@ class Coach:
 		print("Number of test samples: {}".format(len(test_dataset)))
 		return train_dataset, test_dataset
 
-	def calc_loss(self, x, y, y_hat, latent):
+	def calc_loss(self, x, y, y_hat, latent, latent_front):
 		loss_dict = {}
 		loss = 0.0
 		id_logs = None
@@ -234,6 +234,10 @@ class Coach:
 			loss_w_norm = self.w_norm_loss(latent, self.net.latent_avg)
 			loss_dict['loss_w_norm'] = float(loss_w_norm)
 			loss += loss_w_norm * self.opts.w_norm_lambda
+		if self.opts.w_frontal_lambda >0:
+			loss_w_frontal = F.mse_loss(latent, latent_front)
+			loss_dict['loss_w_frontal'] = float(loss_w_frontal)
+			loss += loss_w_frontal* self.opts.w_frontal_lambda
 		loss_dict['loss'] = float(loss)
 		return loss, loss_dict, id_logs
 
