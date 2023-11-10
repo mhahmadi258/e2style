@@ -122,15 +122,18 @@ class BackboneEncoderFirstStage(Module):
     
     def forward(self, x):
         ws = list()
+        ws_frontal = list()
         for i in range(x.shape[1]):
             w, w_frontal = self.calc_w(x[:,i,...])
             ws.append(w)
-            ws.append(w_frontal)  
+            ws_frontal.append(w_frontal)  
         ws = torch.stack(ws)
+        ws_frontal = torch.stack(ws_frontal)
         
         vectors = list()
         for i in range(18):
             vector = ws[:,:,i,...]
             vector = self.seq_adapters[i](vector)
-            vectors.append(vector)
+            frontal_vector = torch.mean(ws_frontal, dim=0)
+            vectors.append(vector + frontal_vector)
         return torch.stack(vectors, dim=1)
