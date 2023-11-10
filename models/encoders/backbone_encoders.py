@@ -12,16 +12,19 @@ class AdapterBlock(Module):
         self.in_d = in_d
         self.out_d = out_d
         self.num_module = num_module
-        self.adapters = nn.ModuleList([Linear(in_d, out_d, device='cuda:0') for _ in range(num_module)])
+        self.adapters = nn.ModuleList([Linear(in_d, out_d) for _ in range(num_module)])
         
 
     def forward(self, x):
         vectors = list()
         for i in range(self.num_module):
             vector = x[:,i,...]
+            vector_std = torch.std(vector, dim=1, keepdim=True)
             out = self.adapters[i](vector)
             res = vector + out
-            vectors.append(res)
+            res_std = torch.std(res, dim=1, keepdim=True)
+            final_res = vector_std * (res / res_std)
+            vectors.append(final_res)
         return torch.stack(vectors,dim=1)
 
 class BackboneEncoderFirstStage(Module):
