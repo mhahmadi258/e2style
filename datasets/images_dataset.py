@@ -97,8 +97,8 @@ class MHImagesDataset(Dataset):
 		img = np.array(img)
   
 		from_imgs = list()
-		for i in range(1,8):
-			from_imgs.append(Image.fromarray(img[:,i*256:(i+1)*256,:]))
+		for i in range(1,img.shape[0]//256):
+			from_imgs.append(Image.fromarray(img[i*256:(i+1)*256,:,:]))
    
 		to_img = Image.fromarray(img[:,:256,:])
   
@@ -112,7 +112,7 @@ class MHImagesDataset(Dataset):
 		if self.source_transform:
 			from_imgs = [self.source_transform(from_img) for from_img in from_imgs]
    
-		idx = np.random.randint(7)
+		idx = np.random.randint(img.shape[0]//256-1)
 		from_img = from_imgs[idx]
 
 		return from_img, to_img
