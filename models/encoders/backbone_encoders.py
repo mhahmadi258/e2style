@@ -12,7 +12,7 @@ class AdapterBlock(Module):
         self.in_d = in_d
         self.out_d = out_d
         self.num_module = num_module
-        self.adapters = nn.ModuleList([Linear(in_d, out_d, device='cuda:0') for _ in range(num_module)])
+        self.adapters = nn.ModuleList([Linear(in_d, out_d) for _ in range(num_module)])
         
 
     def forward(self, x):

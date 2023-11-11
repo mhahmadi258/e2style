@@ -73,10 +73,11 @@ class ImagesDataset(Dataset):
 		return from_im, to_im
 
 
-class MHImagesDataset(Dataset):
+class BabapourDataset(Dataset):
 
-	def __init__(self, source_root, train, opts, target_transform=None, source_transform=None):
+	def __init__(self, source_root, target_root ,train, opts, target_transform=None, source_transform=None):
 		self.source_paths = sorted(data_utils.make_dataset(source_root))
+		self.target_paths = sorted(data_utils.make_dataset(target_root))
 		if train:
 			self.source_paths =self.source_paths[:int(len(self.source_paths)*0.9)]
 		else:
@@ -89,30 +90,22 @@ class MHImagesDataset(Dataset):
 		return len(self.source_paths)
 
 	def __getitem__(self, index):
-		idx = 0
-		while True:
-			path = self.source_paths[index-idx]
-			try:
-				img = Image.open(path)
-				break
-			except :
-				idx +=1
-   
-		img = img.convert('RGB') if self.opts.label_nc == 0 else img.convert('L')
+		src_path = self.source_paths[index]
+		target_path = self.target_paths[index]
   
-		from_im = img.crop((0,0,256,256))
-		to_im = img.crop((256,0,512,256))
+  
+		from_img = Image.open(src_path).convert('RGB')
+		to_img = Image.open(target_path).convert('RGB')
+
 
 		if np.random.uniform(0, 1) < 0.5:
-			from_im = from_im.transpose(Image.FLIP_LEFT_RIGHT)
-			to_im = to_im.transpose(Image.FLIP_LEFT_RIGHT)
+			from_img = from_img.transpose(Image.FLIP_LEFT_RIGHT)
+			to_img = to_img.transpose(Image.FLIP_LEFT_RIGHT)
 
 		if self.target_transform:
-			to_im = self.target_transform(to_im)
+			to_img = self.target_transform(to_img)
 
 		if self.source_transform:
-			from_im = self.source_transform(from_im)
-		else:
-			from_im = to_im
+			from_img = self.source_transform(from_img)
 
-		return from_im, to_im
+		return from_img, to_img

@@ -1,3 +1,4 @@
+import os
 from configs import transforms_config
 from configs.paths_config import dataset_paths
 
@@ -12,10 +13,10 @@ DATASETS = {
 	},
  	'mh_frontalize': {
 		'transforms': transforms_config.FrontalizationTransforms,
-		'train_source_root': dataset_paths['mh_dataset'],
-		'train_target_root': dataset_paths['mh_dataset'],
-		'test_source_root': dataset_paths['mh_dataset'],
-		'test_target_root': dataset_paths['mh_dataset'],
+		'train_source_root': os.path.join(dataset_paths['mh_dataset'], 'input_data'),
+		'train_target_root': os.path.join(dataset_paths['mh_dataset'], 'target_data'),
+		'test_source_root': os.path.join(dataset_paths['mh_dataset'], 'input_data'),
+		'test_target_root': os.path.join(dataset_paths['mh_dataset'], 'target_data'),
 	},
 	'ffhq_colorization': {
 		'transforms': transforms_config.RestorationTransforms,
