@@ -80,8 +80,10 @@ class BabapourDataset(Dataset):
 		self.target_paths = sorted(data_utils.make_dataset(target_root))
 		if train:
 			self.source_paths =self.source_paths[:int(len(self.source_paths)*0.9)]
+			self.target_paths =self.target_paths[:int(len(self.target_paths)*0.9)]
 		else:
 			self.source_paths = self.source_paths[int(len(self.source_paths)*0.9):]
+			self.target_paths = self.target_paths[int(len(self.target_paths)*0.9):]
 		self.source_transform = source_transform
 		self.target_transform = target_transform
 		self.opts = opts
