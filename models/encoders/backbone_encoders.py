@@ -27,7 +27,7 @@ class AdapterBlock(Module):
     def __init__(self, emb_dim):
         super().__init__()
         self.emb_dim = emb_dim
-        self.attn = AttentionBlock(emb_dim, 4)
+        self.attn = nn.Sequential(*[AttentionBlock(emb_dim, 4) for i in range(3)])
         self.attn_cls_token = nn.Parameter(torch.rand(1, 1, emb_dim))
         self.out_attn = Linear(emb_dim, emb_dim)
 
@@ -77,7 +77,7 @@ class BackboneEncoderFirstStage(Module):
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
         
-        self.adapters = nn.ModuleList([nn.Sequential(*[AdapterBlock(512) for i in range(3)]) for _ in range(18)])
+        self.adapters = nn.ModuleList([AdapterBlock(512) for _ in range(18)])
 
     def calc_w(self, x):
         x = self.input_layer(x)
