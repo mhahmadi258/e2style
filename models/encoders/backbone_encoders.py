@@ -77,7 +77,7 @@ class BackboneEncoderFirstStage(Module):
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
         
-        self.adapters = nn.ModuleList([AdapterBlock(512) for _ in range(18)])
+        self.adapters = nn.ModuleList([nn.Sequential(*[AdapterBlock(512) for i in range(3)]) for _ in range(18)])
 
     def calc_w(self, x):
         x = self.input_layer(x)
