@@ -33,6 +33,7 @@ class AdapterBlock(Module):
         self.out_attn = Linear(256, emb_dim)
 
     def forward(self, x):
+        x = self.down_sampler(x)
         kqv = torch.vstack((self.attn_cls_token.repeat((1, x.shape[1],1)), x))
         res = self.attn(kqv)
         res = self.out_attn(res[0])
