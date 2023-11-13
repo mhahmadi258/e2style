@@ -27,9 +27,10 @@ class AdapterBlock(Module):
     def __init__(self, emb_dim):
         super().__init__()
         self.emb_dim = emb_dim
-        self.attn = AttentionBlock(emb_dim, 4)
-        self.attn_cls_token = nn.Parameter(torch.rand(1, 1, emb_dim))
-        self.out_attn = Linear(emb_dim, emb_dim)
+        self.down_sampler = Linear(emb_dim, 256)
+        self.attn = AttentionBlock(256, 4)
+        self.attn_cls_token = nn.Parameter(torch.rand(1, 1, 256))
+        self.out_attn = Linear(256, emb_dim)
 
     def forward(self, x):
         kqv = torch.vstack((self.attn_cls_token.repeat((1, x.shape[1],1)), x))
