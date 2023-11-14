@@ -100,7 +100,7 @@ class MHImagesDataset(Dataset):
 		for i in range(1,img.shape[0]//256):
 			from_imgs.append(Image.fromarray(img[i*256:(i+1)*256,:,:]))
    
-		to_img = Image.fromarray(img[:,:256,:])
+		to_img = Image.fromarray(img[:256,:,:])
   
 		if np.random.uniform(0, 1) < 0.5:
 			from_imgs = [from_img.transpose(Image.FLIP_LEFT_RIGHT) for from_img in from_imgs] 
