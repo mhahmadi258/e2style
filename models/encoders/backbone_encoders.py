@@ -33,8 +33,9 @@ class AdapterBlock(Module):
 
     def forward(self, x):
         kqv = torch.vstack((self.attn_cls_token.repeat((1, x.shape[1],1)), x))
-        res = self.attn(kqv)
-        res = self.out_attn(res[0])
+        for atn in self.attn:
+            kqv = atn(kqv) + kqv
+        res = self.out_attn(kqv[0])
         return res
 
 class BackboneEncoderFirstStage(Module):
