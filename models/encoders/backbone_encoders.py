@@ -72,21 +72,21 @@ class BackboneEncoderFirstStage(Module):
                                          Flatten(),
                                          Linear(256 * 7 * 7, 512 * 9))
         
-        self.adapter_layer_3 = AdapterBlock(512,9)
+        self.adapter_layer_3 = AdapterBlock(256,9)
         
         self.output_layer_4 = Sequential(BatchNorm2d(128),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(128 * 7 * 7, 512 * 5))
         
-        self.adapter_layer_4 = AdapterBlock(512,5)
+        self.adapter_layer_4 = AdapterBlock(128,5)
         
         self.output_layer_5 = Sequential(BatchNorm2d(64),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(64 * 7 * 7, 512 * 4))
         
-        self.adapter_layer_5 = AdapterBlock(512,4)
+        self.adapter_layer_5 = AdapterBlock(64,4)
         
         
         modules = []
