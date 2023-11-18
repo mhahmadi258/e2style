@@ -39,19 +39,18 @@ class SeqAdapterBlock(Module):
     
     
 class AdapterBlock(Module):
-    def __init__(self, emb_dim, num_module):
+    def __init__(self, in_channel, num_module):
         super().__init__()
         self.num_module = num_module
-        self.adapters = nn.ModuleList([Linear(emb_dim, emb_dim, device='cuda:0') for _ in range(num_module)])
+        self.adapter = Sequential(BatchNorm2d(in_channel),
+                                         torch.nn.AdaptiveAvgPool2d((7, 7)),
+                                         Flatten(),
+                                         Linear(in_channel * 7 * 7, 512 * num_module))
         
-    def forward(self, x):
-        vectors = list()
-        for i in range(self.num_module):
-            vector = x[:,i,...]
-            out = self.adapters[i](vector)
-            res = vector + out
-            vectors.append(res)
-        return torch.stack(vectors,dim=1)
+
+    def forward(self, x , w):
+        out = self.adapter(x).view(-1, self.num_module, 512)
+        return w + out
 
 class BackboneEncoderFirstStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
