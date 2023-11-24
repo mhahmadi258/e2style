@@ -10,7 +10,7 @@ class AdapterBlock(Module):
     def __init__(self, emb_dim, num_module):
         super().__init__()
         self.num_module = num_module
-        self.adapters = nn.ModuleList([nn.Sequential(Linear(emb_dim, 256), nn.ReLU(), Linear(256, emb_dim)) for _ in range(num_module)])
+        self.adapters = nn.ModuleList([nn.Sequential(Linear(emb_dim, 256), Linear(256, emb_dim)) for _ in range(num_module)])
         
 
     def forward(self, x):
