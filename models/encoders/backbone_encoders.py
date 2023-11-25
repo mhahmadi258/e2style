@@ -64,6 +64,21 @@ class BackboneEncoderFirstStage(Module):
                                            bottleneck.stride))
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
+        
+    def calc_w(self, x):
+        x = self.input_layer(x)
+        for l in self.modulelist[:3]:
+          x = l(x)
+        lc_part_4 = self.output_layer_5(x).view(-1, 4, 512)
+        for l in self.modulelist[3:7]:
+          x = l(x)
+        lc_part_3 = self.output_layer_4(x).view(-1, 5, 512)
+        for l in self.modulelist[7:21]:
+          x = l(x)
+        lc_part_2 = self.output_layer_3(x).view(-1, 9, 512)
+
+        x = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
+        return x
 
     def forward(self, x , y =None):
         x = self.input_layer(x)
