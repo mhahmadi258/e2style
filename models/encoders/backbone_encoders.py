@@ -65,7 +65,7 @@ class BackboneEncoderFirstStage(Module):
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
 
-    def forward(self, x):
+    def forward(self, x , y =None):
         x = self.input_layer(x)
         for l in self.modulelist[:3]:
           x = l(x)
@@ -81,7 +81,12 @@ class BackboneEncoderFirstStage(Module):
         lc_part_2 = self.adapter_layer_3(x, lc_part_2)
 
         x = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
-        return x
+        if y is not None:
+            w_y = self.calc_w(y)
+            return x, w_y
+        else:
+            return x
+    
 
 class BackboneEncoderRefineStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):

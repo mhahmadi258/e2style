@@ -86,18 +86,25 @@ class E2Style(nn.Module):
 				self.__load_latent_avg(ckpt, repeat=18)		
 
 
-	def forward(self, x, resize=True, input_code=False, randomize_noise=True, return_latents=False):
+	def forward(self, x, y=None, resize=True, input_code=False, randomize_noise=True, return_latents=False):
 
 		stage_output_list = []
 		if input_code:
 			codes = x
 		else:
-			codes = self.encoder_firststage(x)
+			if y is not None:
+				codes, codes_y = self.encoder_firststage(x, y=y)
+			else:
+				codes = self.encoder_firststage(x)
 			if self.opts.start_from_latent_avg:
 				if self.opts.learn_in_w:
 					codes = codes + self.latent_avg.repeat(codes.shape[0], 1)
+					if y is not None:
+						codes_y = codes_y + self.latent_avg.repeat(codes_y.shape[0], 1)
 				else: 
 					codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
+					if y is not None:
+						codes_y = codes_y + self.latent_avg.repeat(codes_y.shape[0], 1, 1)
 		input_is_latent = not input_code
 		first_stage_output, result_latent = self.decoder([codes],input_is_latent=input_is_latent,randomize_noise=randomize_noise,return_latents=return_latents)
 		stage_output_list.append(first_stage_output)
@@ -112,7 +119,10 @@ class E2Style(nn.Module):
 			images = self.face_pool(stage_output_list[-1])
 
 		if return_latents:
-			return images, result_latent
+			if y is not None:
+				return images, result_latent, codes_y
+			else:
+				return images, result_latent
 		else:
 			return images
 
