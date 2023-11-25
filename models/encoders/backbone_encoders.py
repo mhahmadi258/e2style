@@ -13,7 +13,8 @@ class AdapterBlock(Module):
         self.adapter = Sequential(BatchNorm2d(in_channel),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
-                                         Linear(in_channel * 7 * 7, 512 * num_module))
+                                         Linear(in_channel * 7 * 7, 2 * in_channel),
+                                         Linear(2 * in_channel, 512 * num_module))
         
 
     def forward(self, x , w):
@@ -38,24 +39,21 @@ class BackboneEncoderFirstStage(Module):
         self.output_layer_3 = Sequential(BatchNorm2d(256),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
-                                         Linear(256 * 7 * 7, 512),
-                                         Linear(512, 512 * 9))
+                                         Linear(256 * 7 * 7, 512 * 9))
         
         self.adapter_layer_3 = AdapterBlock(256, 9)
         
         self.output_layer_4 = Sequential(BatchNorm2d(128),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
-                                         Linear(128 * 7 * 7, 256),
-                                         Linear(256, 512 * 5))
+                                         Linear(128 * 7 * 7, 512 * 5))
         
         self.adapter_layer_4 = AdapterBlock(128, 5)
         
         self.output_layer_5 = Sequential(BatchNorm2d(64),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
-                                         Linear(64 * 7 * 7, 128),
-                                         Linear(128, 512 * 4))
+                                         Linear(64 * 7 * 7, 512 * 4))
         
         self.adapter_layer_5 = AdapterBlock(64, 4)
         
