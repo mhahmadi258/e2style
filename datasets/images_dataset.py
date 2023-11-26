@@ -7,6 +7,30 @@ import cv2
 import random
 import skimage
 from skimage import img_as_ubyte
+
+def destruct_images(image_list, noise_prob=0.5, resize_prob=0.5):
+    destructed_list = []
+
+    for img_path in image_list:
+        img = Image.open(img_path)
+
+        # Randomly replace the image with a fully noised version
+        if random.random() < noise_prob:
+            noise_array = np.random.randint(0, 256, size=(img.height, img.width, 3), dtype=np.uint8)
+            noise_img = Image.fromarray(noise_array)
+            destructed_list.append(noise_img)
+
+        # Randomly resize the image
+        elif random.random() < resize_prob:
+            img = img.resize((128, 128))
+            img = img.resize((256, 256))
+            destructed_list.append(img)
+
+        else:
+            destructed_list.append(img)
+
+    return destructed_list
+
 class ImagesDataset(Dataset):
 
 	def __init__(self, source_root, target_root, opts, target_transform=None, source_transform=None):
@@ -105,6 +129,7 @@ class MHImagesDataset(Dataset):
 		if self.target_transform:
 			to_img = self.target_transform(to_img)
 
+		from_imgs = destruct_images(from_imgs,0.05, 0.05)
 		if self.source_transform:
 			from_imgs = [self.source_transform(from_img) for from_img in from_imgs]
    
