@@ -19,8 +19,8 @@ class AdapterBlock(Module):
     def forward(self, x , w):
         out = self.adapter(x).view(-1, self.num_module, 512)
         for i in range(self.num_module):
-            w = w[:,i,...] + out[:,i,...]
-        return w + out
+            w[:,i,...] = w[:,i,...] + out[:,i,...]
+        return w
 
 class BackboneEncoderFirstStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
