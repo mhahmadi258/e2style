@@ -14,6 +14,7 @@ class AdapterBlock(Module):
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(in_channel * 7 * 7, 2 * in_channel),
+                                         nn.GELU(),
                                          Linear(2 * in_channel, 512 * num_module))
         
 
