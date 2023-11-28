@@ -11,8 +11,7 @@ from skimage import img_as_ubyte
 def destruct_images(image_list, noise_prob=0.5, resize_prob=0.5):
     destructed_list = []
 
-    for img_path in image_list:
-        img = Image.open(img_path)
+    for img in image_list:
 
         # Randomly replace the image with a fully noised version
         if random.random() < noise_prob:
