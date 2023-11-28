@@ -16,9 +16,14 @@ def destruct_images(image_list, noise_prob=0.5, resize_prob=0.5):
 
         # Randomly replace the image with a fully noised version
         if random.random() < noise_prob:
-            noise_array = np.random.randint(0, 256, size=(img.height, img.width, 3), dtype=np.uint8)
-            noise_img = Image.fromarray(noise_array)
-            destructed_list.append(noise_img)
+            # Crop the image with the size of 128x128 randomly
+            crop_size = (128, 128)
+            crop_position = (random.randint(0, img.width - crop_size[0]), random.randint(0, img.height - crop_size[1]))
+            cropped_img = img.crop((crop_position[0], crop_position[1], crop_position[0] + crop_size[0], crop_position[1] + crop_size[1]))
+
+            # Resize the cropped version to 256x256
+            resized_img = cropped_img.resize((256, 256))
+            destructed_list.append(resized_img)
 
         # Randomly resize the image
         elif random.random() < resize_prob:
@@ -30,6 +35,7 @@ def destruct_images(image_list, noise_prob=0.5, resize_prob=0.5):
             destructed_list.append(img)
 
     return destructed_list
+
 
 class ImagesDataset(Dataset):
 
@@ -129,7 +135,7 @@ class MHImagesDataset(Dataset):
 		if self.target_transform:
 			to_img = self.target_transform(to_img)
 
-		from_imgs = destruct_images(from_imgs,0.05, 0.05)
+		from_imgs = destruct_images(from_imgs,0.1, 0.1)
 		if self.source_transform:
 			from_imgs = [self.source_transform(from_img) for from_img in from_imgs]
    
