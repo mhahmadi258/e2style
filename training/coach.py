@@ -94,15 +94,15 @@ class Coach:
 				if self.global_step % self.opts.board_interval == 0:
 					self.print_metrics(loss_dict, prefix='train')
 					self.log_metrics(loss_dict, prefix='train')
-					for name, param in self.net.encoder_firststage.named_parameters():
-						if param.requires_grad == True:
-							layer, attr = os.path.splitext(name)
-							attr = attr[1:]
-							try:
-								self.logger.add_histogram(f'{layer}/{attr}', param.clone().cpu().data.numpy(), self.global_step)
-								self.logger.add_histogram(f'{layer}/{attr}_grad', param.grad.clone().cpu().data.numpy(), self.global_step)
-							except:
-								print('Error occured while trying to write parameter info into tensorboard')
+					# for name, param in self.net.encoder_firststage.named_parameters():
+					# 	if param.requires_grad == True:
+					# 		layer, attr = os.path.splitext(name)
+					# 		attr = attr[1:]
+					# 		try:
+					# 			self.logger.add_histogram(f'{layer}/{attr}', param.clone().cpu().data.numpy(), self.global_step)
+					# 			self.logger.add_histogram(f'{layer}/{attr}_grad', param.grad.clone().cpu().data.numpy(), self.global_step)
+					# 		except:
+					# 			print('Error occured while trying to write parameter info into tensorboard')
 
 				# Validation related
 				val_loss_dict = None
