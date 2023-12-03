@@ -9,7 +9,7 @@ from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottlene
 class AdapterBlock(Module):
     def __init__(self, emb_dim):
         super().__init__()
-        self.adapter = Linear(emb_dim, emb_dim)
+        self.adapter = nn.Sequential(Linear(emb_dim, 256), nn.GELU(),Linear(256, emb_dim))
         
 
     def forward(self, x):
