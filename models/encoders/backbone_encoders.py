@@ -105,8 +105,16 @@ class BackboneEncoderFirstStage(Module):
         lc_part_2 = self.output_layer_3(x).view(-1, 9, 512)
 
         x = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
-        return x
-    
+        
+        w_frontal = list()
+        for i in range(18):
+            vector = x[:,i,...]
+            if i < len(self.adapter_layers):
+                vector = self.adapter_layers[i](vector)
+            w_frontal.append(vector.unsqueeze(1))
+        w_frontal = torch.cat(w_frontal, dim=1)
+        return x, w_frontal
+      
     def forward(self, x):
         ws = list()
         ws_frontal = list()
