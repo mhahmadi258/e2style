@@ -6,7 +6,6 @@ from torch.nn import Linear, Conv2d, BatchNorm2d, PReLU, Sequential, Module, Mul
 
 from models.encoders.helpers import get_blocks, Flatten, bottleneck_IR, bottleneck_IR_SE
 
-
 class AttentionBlock(Module):
     def __init__(self, emb_dim, num_heads):
         super().__init__()
@@ -36,22 +35,17 @@ class SeqAdapterBlock(Module):
         res = self.attn(kqv)
         res = self.out_attn(res[0])
         return res
-    
-    
+
 class AdapterBlock(Module):
-    def __init__(self, emb_dim, num_module):
+    def __init__(self, emb_dim):
         super().__init__()
-        self.num_module = num_module
-        self.adapters = nn.ModuleList([Linear(emb_dim, emb_dim, device='cuda:0') for _ in range(num_module)])
+        self.adapter = nn.Sequential(Linear(emb_dim, 256), nn.GELU(),Linear(256, emb_dim))
         
+
     def forward(self, x):
-        vectors = list()
-        for i in range(self.num_module):
-            vector = x[:,i,...]
-            out = self.adapters[i](vector)
-            res = vector + out
-            vectors.append(res)
-        return torch.stack(vectors,dim=1)
+        out = self.adapter(x)
+        res = x + out
+        return res
 
 class BackboneEncoderFirstStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
@@ -73,22 +67,18 @@ class BackboneEncoderFirstStage(Module):
                                          Flatten(),
                                          Linear(256 * 7 * 7, 512 * 9))
         
-        self.adapter_layer_3 = AdapterBlock(512,9)
         
         self.output_layer_4 = Sequential(BatchNorm2d(128),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(128 * 7 * 7, 512 * 5))
-        
-        self.adapter_layer_4 = AdapterBlock(512,5)
-        
+               
         self.output_layer_5 = Sequential(BatchNorm2d(64),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
                                          Linear(64 * 7 * 7, 512 * 4))
         
-        self.adapter_layer_5 = AdapterBlock(512,4)
-        
+        self.adapter_layers = nn.ModuleList([AdapterBlock(512) for _ in range(6)])
         
         modules = []
         for block in blocks:
@@ -99,26 +89,23 @@ class BackboneEncoderFirstStage(Module):
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
         
-        self.seq_adapters = nn.ModuleList([SeqAdapterBlock(512) for _ in range(18)])
+        self.seq_adapters = nn.ModuleList([SeqAdapterBlock(512) for _ in range(6)])
 
+    
     def calc_w(self, x):
         x = self.input_layer(x)
         for l in self.modulelist[:3]:
           x = l(x)
         lc_part_4 = self.output_layer_5(x).view(-1, 4, 512)
-        lc_part_4_frontal = self.adapter_layer_5(lc_part_4)
         for l in self.modulelist[3:7]:
           x = l(x)
         lc_part_3 = self.output_layer_4(x).view(-1, 5, 512)
-        lc_part_3_frontal = self.adapter_layer_4(lc_part_3)
         for l in self.modulelist[7:21]:
           x = l(x)
         lc_part_2 = self.output_layer_3(x).view(-1, 9, 512)
-        lc_part_2_frontal = self.adapter_layer_3(lc_part_2)
 
         x = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
-        x_frontal = torch.cat((lc_part_2_frontal, lc_part_3_frontal, lc_part_4_frontal), dim=1)
-        return x, x_frontal
+        return x
     
     def forward(self, x):
         ws = list()
@@ -134,7 +121,10 @@ class BackboneEncoderFirstStage(Module):
         for i in range(18):
             vector = ws[:,:,i,...]
             frontal_vector = ws_frontal[:,:,i,...]
-            vector = self.seq_adapters[i](vector)
-            frontal_vector = torch.mean(frontal_vector, dim=0)
-            vectors.append(vector + frontal_vector)
-        return torch.stack(vectors, dim=1)
+            if i <6:
+                vector = self.seq_adapters[i](vector)
+                frontal_vector = torch.mean(frontal_vector, dim=0)
+                vectors.append(vector + frontal_vector)
+            else:
+                vectors.append(torch.mean(vector, 0))
+        return torch.stack(vectors, dim=1)          
