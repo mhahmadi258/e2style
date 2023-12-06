@@ -37,15 +37,20 @@ class SeqAdapterBlock(Module):
         return res
 
 class AdapterBlock(Module):
-    def __init__(self, emb_dim):
+    def __init__(self, in_channel, num_module):
         super().__init__()
-        self.adapter = nn.Sequential(Linear(emb_dim, 256), nn.GELU(),Linear(256, emb_dim))
+        self.num_module = num_module
+        self.adapter = Sequential(BatchNorm2d(in_channel),
+                                         torch.nn.AdaptiveAvgPool2d((7, 7)),
+                                         Flatten(),
+                                         Linear(in_channel * 7 * 7, 512 * num_module))
         
 
-    def forward(self, x):
-        out = self.adapter(x)
-        res = x + out
-        return res
+    def forward(self, x , w):
+        out = self.adapter(x).view(-1, self.num_module, 512)
+        for i in range(self.num_module):
+            w[:,i,...] = w[:,i,...] + out[:,i,...]
+        return w
 
 class BackboneEncoderFirstStage(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
@@ -67,6 +72,7 @@ class BackboneEncoderFirstStage(Module):
                                          Flatten(),
                                          Linear(256 * 7 * 7, 512 * 9))
         
+        self.adapter_layer_3 = AdapterBlock(256, 6)
         
         self.output_layer_4 = Sequential(BatchNorm2d(128),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
@@ -78,7 +84,6 @@ class BackboneEncoderFirstStage(Module):
                                          Flatten(),
                                          Linear(64 * 7 * 7, 512 * 4))
         
-        self.adapter_layers = nn.ModuleList([AdapterBlock(512) for _ in range(6)])
         
         modules = []
         for block in blocks:
@@ -103,17 +108,11 @@ class BackboneEncoderFirstStage(Module):
         for l in self.modulelist[7:21]:
           x = l(x)
         lc_part_2 = self.output_layer_3(x).view(-1, 9, 512)
+        lc_part_2_frontal = self.adapter_layer_3(x, lc_part_2)
 
         x = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
-        
-        w_frontal = list()
-        for i in range(18):
-            vector = x[:,i,...]
-            if i < len(self.adapter_layers):
-                vector = self.adapter_layers[i](vector)
-            w_frontal.append(vector.unsqueeze(1))
-        w_frontal = torch.cat(w_frontal, dim=1)
-        return x, w_frontal
+        x_frontal = torch.cat((lc_part_2, lc_part_3, lc_part_4), dim=1)
+        return x, x_frontal
       
     def forward(self, x):
         ws = list()
