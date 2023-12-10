@@ -13,7 +13,9 @@ class AdapterBlock(Module):
         self.adapter = Sequential(BatchNorm2d(in_channel),
                                          torch.nn.AdaptiveAvgPool2d((7, 7)),
                                          Flatten(),
-                                         Linear(in_channel * 7 * 7, 512 * num_module))
+                                         Linear(in_channel * 7 * 7, 2 * in_channel),
+                                         nn.GELU(),
+                                         Linear(2 * in_channel, 512 * num_module))
         
 
     def forward(self, x , w):
