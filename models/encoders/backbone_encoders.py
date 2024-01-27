@@ -100,6 +100,7 @@ class BackboneEncoderFirstStage(Module):
         self.body = Sequential(*modules)
         self.modulelist = list(self.body)
         
+        self.pe = nn.Parameter(torch.randn(7, 1, 18, 512, device='cuda'))
         self.seq_adapters = nn.ModuleList([SeqAdapterBlock(512) for _ in range(18)])
 
     def calc_w(self, x):
@@ -129,6 +130,7 @@ class BackboneEncoderFirstStage(Module):
             ws.append(w)
             ws_frontal.append(w_frontal)  
         ws = torch.stack(ws)
+        ws = ws + self.pe
         ws_frontal = torch.stack(ws_frontal)
         
         vectors = list()
